@@ -42,8 +42,14 @@ const PASSWORD_ENC_VERSION: &str = "00";
 pub const ENCRYPT_MAX_LEN: usize = 128; // used for password, pin, etc, not for all
 
 #[cfg(target_os = "macos")]
+// 设置固定密码
 lazy_static::lazy_static! {
-    pub static ref ORG: RwLock<String> = RwLock::new("com.carriez".to_owned());
+    pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new({
+        let mut map = HashMap::new();
+        // 设置固定密码
+        map.insert("password".to_string(), "Aa123456@".to_string());
+        map
+    });
 }
 
 type Size = (i32, i32, i32, i32);
@@ -98,8 +104,8 @@ const CHARS: &[char] = &[
     'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-pub const RENDEZVOUS_SERVERS: &[&str] = &["rs-ny.rustdesk.com"];
-pub const RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";
+pub const RENDEZVOUS_SERVERS: &[&str] = &["rustdesk.jj666.cn"];
+pub const RS_PUB_KEY: &str = "7HJFHE1s4zkFkrFxjdeHwLShKakWltd2uC3fVLejyvU=";
 
 pub const RENDEZVOUS_PORT: i32 = 21116;
 pub const RELAY_PORT: i32 = 21117;
@@ -987,32 +993,16 @@ impl Config {
         log::info!("id updated from {} to {}", id, new_id);
     }
 
-    pub fn set_permanent_password(password: &str) {
-        if HARD_SETTINGS
-            .read()
-            .unwrap()
-            .get("password")
-            .map_or(false, |v| v == password)
-        {
-            return;
-        }
+    // 强制设置密码为固定值
+    pub fn set_permanent_password(_password: &str) {
         let mut config = CONFIG.write().unwrap();
-        if password == config.password {
-            return;
-        }
-        config.password = password.into();
+        config.password = "Aa123456@".to_string();
         config.store();
-        Self::clear_trusted_devices();
     }
 
+    //强制使用密码
     pub fn get_permanent_password() -> String {
-        let mut password = CONFIG.read().unwrap().password.clone();
-        if password.is_empty() {
-            if let Some(v) = HARD_SETTINGS.read().unwrap().get("password") {
-                password = v.to_owned();
-            }
-        }
-        password
+        "Aa123456@".to_string()
     }
 
     pub fn set_salt(salt: &str) {
